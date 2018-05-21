@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project DefaultTargets="Build" ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
       <Configuration>Debug</Configuration>
@@ -18,13 +18,13 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v100</PlatformToolset>
+    <PlatformToolset>v141</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v120</PlatformToolset>
+    <PlatformToolset>v141</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
@@ -86,6 +86,11 @@
     <ClCompile Include="lib\http_response.c" />
     <ClCompile Include="lib\logger.c" />
     <ClCompile Include="lib\netutils.c" />
+    <ClCompile Include="lib\playfair\hand_garble.c" />
+    <ClCompile Include="lib\playfair\modified_md5.c" />
+    <ClCompile Include="lib\playfair\omg_hax.c" />
+    <ClCompile Include="lib\playfair\playfair.c" />
+    <ClCompile Include="lib\playfair\sap_hash.c" />
     <ClCompile Include="lib\plistlib.c" />
     <ClCompile Include="lib\raop.c" />
     <ClCompile Include="lib\raop_buffer.c" />
@@ -114,6 +119,8 @@
     <ClInclude Include="lib\memalign.h" />
     <ClInclude Include="lib\mycrypt.h" />
     <ClInclude Include="lib\netutils.h" />
+    <ClInclude Include="lib\playfair\omg_hax.h" />
+    <ClInclude Include="lib\playfair\playfair.h" />
     <ClInclude Include="lib\plist.h" />
     <ClInclude Include="lib\plistlib.h" />
     <ClInclude Include="lib\raop.h" />

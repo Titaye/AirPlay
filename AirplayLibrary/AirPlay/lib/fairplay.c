@@ -57,46 +57,46 @@ static void close_fairplay_socket()
 	fairplay_sock_fd = 0;
 }
 
-unsigned char * fairplay_query(int cmd, const unsigned char *data, int len, int *size_p)
-{
-	int sock_fd;
-	unsigned char recvbuf[1024] = { 0 };
-	unsigned char sendbuf[1024] = { 0 };
-	int sendlen = 0;
-	int retlen;
-	unsigned char *buf;
-
-	if (cmd < 1 || cmd > 3) return NULL;
-
-	sock_fd = get_fairplay_socket();
-
-	sendlen = len + 2;
-	sendbuf[0] = cmd & 0xff;
-	sendbuf[1] = sendlen & 0xff;
-	memcpy(sendbuf + 2, data, len);
-
-	retlen = send(sock_fd, sendbuf, sendlen, 0);
-	if (retlen < 0) {
-		close_fairplay_socket();
-		return NULL;
-	}
-
-	retlen = recv(sock_fd, recvbuf, 1024, 0);
-
-	if (retlen <= 0) {
-		close_fairplay_socket();
-		return NULL;
-	}
-
-	*size_p = retlen;
-	buf = (unsigned char*)malloc(retlen);
-	memcpy(buf, recvbuf, retlen);
-
-	if (cmd == 3)
-		close_fairplay_socket();
-
-	return buf;
-}
+//unsigned char * fairplay_query(int cmd, const unsigned char *data, int len, int *size_p)
+//{
+//	int sock_fd;
+//	unsigned char recvbuf[1024] = { 0 };
+//	unsigned char sendbuf[1024] = { 0 };
+//	int sendlen = 0;
+//	int retlen;
+//	unsigned char *buf;
+//
+//	if (cmd < 1 || cmd > 3) return NULL;
+//
+//	sock_fd = get_fairplay_socket();
+//
+//	sendlen = len + 2;
+//	sendbuf[0] = cmd & 0xff;
+//	sendbuf[1] = sendlen & 0xff;
+//	memcpy(sendbuf + 2, data, len);
+//
+//	retlen = send(sock_fd, sendbuf, sendlen, 0);
+//	if (retlen < 0) {
+//		close_fairplay_socket();
+//		return NULL;
+//	}
+//
+//	retlen = recv(sock_fd, recvbuf, 1024, 0);
+//
+//	if (retlen <= 0) {
+//		close_fairplay_socket();
+//		return NULL;
+//	}
+//
+//	*size_p = retlen;
+//	buf = (unsigned char*)malloc(retlen);
+//	memcpy(buf, recvbuf, retlen);
+//
+//	if (cmd == 3)
+//		close_fairplay_socket();
+//
+//	return buf;
+//}
 
 
 //int airplay_decrypt(AES_KEY *ctx, unsigned char *in, unsigned int len, unsigned char *out)

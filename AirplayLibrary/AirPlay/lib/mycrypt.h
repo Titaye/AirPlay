@@ -226,6 +226,7 @@ EXP_FUNC void STDCALL SHA1_Update(SHA1_CTX *, const uint8_t * msg, int len);
 EXP_FUNC void STDCALL SHA1_Final(uint8_t *digest, SHA1_CTX *);
 EXP_FUNC int STDCALL sha1(const unsigned char *message, size_t message_len, unsigned char *out);
 
+
 /**************************************************************************
  * SHA512 declarations 
  **************************************************************************/

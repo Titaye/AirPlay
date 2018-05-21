@@ -33,6 +33,7 @@
 #include "compat.h"
 #include "plistlib.h"
 #include "fairplay.h"
+#include "playfair/playfair.h"
 
 unsigned char g_ed_private_key[64];
 unsigned char g_ed_public_key[32];
@@ -45,6 +46,9 @@ unsigned char g_ed_public_key[32];
 
 /* MD5 as hex fits here */
 #define MAX_NONCE_LEN 32
+
+unsigned char* fairplaySetup = NULL;
+int fairplaySetupLength = 0;
 
 struct airdata_s {
 	logger_t* m_logger;
@@ -554,7 +558,7 @@ http_response_t * request_handle_streamxml(raop_conn_t *conn, http_request_t *re
 		"  <key>refreshRate</key>\r\n"
 		"  <real>0.016666666666667</real>\r\n"
 		"  <key>version</key>\r\n"
-		"  <string>150.33</string>\r\n"
+		"  <string>230.33</string>\r\n"
 		"  <key>width</key>\r\n"
 		"  <integer>%d</integer>\r\n"
 		"</dict>\r\n"
@@ -800,13 +804,20 @@ http_response_t * request_handle_setup(raop_conn_t *conn, http_request_t *reques
             if (p_ekey != NULL) {
 				plist_get_data_val(p_ekey, &p_ekey_data, &p_ekey_size);
 				if (p_ekey_data && p_ekey_size == 72) {// ekey 需要通过 DRM 在线解密
+
+					
+
+					unsigned char* key_data = fairplay_decrypt(fairplaySetup, p_ekey_data);
+					//raop->fairplayTempKeylen = 16;
+
 					int key_size = 0;
-					unsigned char* key_data = fairplay_query(3, (const unsigned char*)p_ekey_data, p_ekey_size, &key_size);
-					if (key_data && key_size == 16) {
-						logger_log(raop->logger, 7, "===============phase3=========length=============%d=====\n", 16);
+
+					//unsigned char* key_data = fairplay_query(3, (const unsigned char*)p_ekey_data, p_ekey_size, &key_size);
+					//if (key_data && key_size == 16) {
+					//	logger_log(raop->logger, 7, "===============phase3=========length=============%d=====\n", 16);
 						memcpy(conn->rsa_key, key_data, 16);
 						free(key_data);
-					}
+					//}
 				}
 			}
 			//获取p_streams
@@ -1159,10 +1170,11 @@ http_response_t * request_handle_announce(raop_conn_t *conn, http_request_t *req
 			conn->et = 3;
 			len = rsakey_base64_decode(raop->rsakey, &buf, fpaeskeystr);
 			if (buf && len == 72) {
-				p = fairplay_query(3, buf, len, &aeskeylen);
-				if (aeskeylen == 16) {
-					memcpy(aeskey, p, aeskeylen);
-				}
+				p = fairplay_decrypt(fairplaySetup, buf);
+				//p = fairplay_query(3, buf, len, &aeskeylen);
+				//if (aeskeylen == 16) {
+					memcpy(aeskey, p, 16);
+				//}
 			} else {
 				logger_log(conn->raop->logger, LOGGER_DEBUG, "base64 decode fail len=%d", len);
 			}
@@ -1203,22 +1215,22 @@ http_response_t * request_handle_authsetup(raop_conn_t *conn, http_request_t *re
 	return response;
 }
 
-http_response_t * request_handle_fpsetup(raop_conn_t *conn, http_request_t *request, http_response_t *response, char **pResponseData, int *pResponseDataLen) {
-	const char *data;
-	int datalen, size;
-	char *buf;
-	data = (const char*)http_request_get_data(request, &datalen);
-	buf = (char*)fairplay_query((datalen == 16 ? 1 : 2), (const unsigned char*)data, datalen, &size);
-	if (buf) {
-		*pResponseData = buf;
-		*pResponseDataLen = size;
-		printf("**********************\n \
-			   responseData: %s\n \
-			   size: %d\n \
-			   ***********************\n", buf, size);
-	}
-	return response;
-}
+//http_response_t * request_handle_fpsetup(raop_conn_t *conn, http_request_t *request, http_response_t *response, char **pResponseData, int *pResponseDataLen) {
+//	const char *data;
+//	int datalen, size;
+//	char *buf;
+//	data = (const char*)http_request_get_data(request, &datalen);
+//	buf = (char*)fairplay_query((datalen == 16 ? 1 : 2), (const unsigned char*)data, datalen, &size);
+//	if (buf) {
+//		*pResponseData = buf;
+//		*pResponseDataLen = size;
+//		printf("**********************\n \
+//			   responseData: %s\n \
+//			   size: %d\n \
+//			   ***********************\n", buf, size);
+//	}
+//	return response;
+//}
 
 http_response_t * request_handle_authorization(raop_conn_t *conn, http_request_t *request, http_response_t *response, int *p_require_auth, char **pResponseData, int *pResponseDataLen) {
 	const char realm[] = "AppleTV"; //"airplay"
@@ -1381,9 +1393,93 @@ static void conn_request(void *ptr, http_request_t *request, http_response_t **r
         res = request_handle_pairsetup(conn, request, res, &responseData, &responseDataLen);
     } else if (!strcmp(method,"POST") && !strcmp(uri,"/pair-verify")) {
         res = request_handle_pairverify(conn, request, res, &responseData, &responseDataLen);
-    } else if (!strcmp(method, "POST") && !strcmp(uri,"/fp-setup")) {
-		res = request_handle_fpsetup(conn, request, res, &responseData, &responseDataLen);
-	} else if (!strcmp(method, "POST") && !strcmp(uri, "/auth-setup")) {
+    } 
+ else if (!strcmp(method, "POST") && !strcmp(uri, "/fp-setup"))
+	 /*(!strcmp(method, "POST") &&
+	 (buffer_prefix(uri, "/fp-")
+	 || buffer_prefix(uri, "/fairplay/challenge/")))*/ {
+
+	 const char *data;
+	 int datalen, size;
+	 unsigned char *buf = NULL;
+
+	 data = http_request_get_data(request, &datalen);
+
+	 const char *cseq = http_request_get_header(request, "CSeq");
+
+
+	 int type = 0;
+	 int seq = 0;
+
+	 type = data[5];
+	 seq = data[6];
+
+	 //printf("Type: %i, Seq: %i\n", type, seq);
+
+	 if (type == 1)
+	 {
+		 if (seq == 1)
+		 {
+			 //printf("Setup1\n");
+			 buf = fairplay_setup(data, datalen, &size);
+		 }
+		 else if (seq == 3)
+		 {
+			 //printf("Setup2\n");
+			 buf = fairplay_setup(data, datalen, &size);
+
+			 //if (raop->fairplaySetup != NULL) {
+				// free(raop->fairplaySetup);
+				// raop->fairplaySetup = NULL;
+			 //}
+
+			 fairplaySetup = (unsigned char*)malloc(datalen); //message3 = fp_message;
+			 fairplaySetupLength = datalen;
+			 memcpy(fairplaySetup, data, datalen);
+		 }
+	 }
+	 //else if (type == 2)
+	 //{
+	 //	printf("Unexpected FP request: %n\n", &type);
+	 //	//printf("Decrypt -> aeskey\n");
+
+	 //	//if (raop->fairplayAesKey != NULL) {
+	 //	//	free(raop->fairplayAesKey);
+	 //	//	raop->fairplayAesKey = NULL;
+	 //	//}
+
+	 //	//raop->fairplayAesKey = fairplay_decrypt(raop->fairplaySetup, (unsigned char*)data);
+	 //	//raop->fairplayAesKeylen = 16;
+	 //	//
+	 //	//http_response_add_header(res, "Connection", "close");
+
+	 //	//buf = (unsigned char*)malloc(raop->fairplayAesKeylen);
+	 //	//memcpy(buf, raop->fairplayAesKey, raop->fairplayAesKeylen);
+	 //	//size = raop->fairplayAesKeylen;
+
+	 //	//send_buffer(fd, "HTTP/1.0 200 OK\r\nContent-Type: application/octet-stream\r\nX-Apple-ET: 32\r\nContent-Length: 16\r\nServer: AirTunes/150.33\r\nConnection: close\r\nCSeq:", -1);
+	 //	//send_buffer(fd, cseq, -1);
+	 //	//send_buffer(fd, "\r\n\r\n", -1);
+	 //	//send_buffer(fd, aesKey, 16);
+	 //	//exit_thread(fd, "Completed request\n");
+	 //}
+	 //else
+	 //{
+	 //	//printf("Unexpected FP request: %n\n", &type);
+	 //	//send_buffer(fd, "RTSP/1.0 404 Not Found\r\n\r\n", -1);
+	 //	//exit_thread(fd, "Unexpected request\n");
+	 //}
+
+
+	 if (buf) {
+		 responseData = (char*)buf;
+		 responseDataLen = size;
+	 }
+ }
+	//else if (!strcmp(method, "POST") && !strcmp(uri,"/fp-setup")) {
+	//	res = request_handle_fpsetup(conn, request, res, &responseData, &responseDataLen);
+	//} 
+	else if (!strcmp(method, "POST") && !strcmp(uri, "/auth-setup")) {
 		res = request_handle_authsetup(conn, request, res, &responseData, &responseDataLen);
 	} else if (!strcmp(method, "GET") && !strcmp(uri, "/info")) {
 		res = request_handle_info(conn, request, res, &responseData, &responseDataLen);
@@ -1408,7 +1504,7 @@ static void conn_request(void *ptr, http_request_t *request, http_response_t **r
 	} else if (!strcmp(method,"POST") && !strcmp(uri,"/feedback")) {
 		res = request_handle_feedback(conn, request, res, &responseData, &responseDataLen);
 	}
-	http_response_add_header(res, "Server", "AirTunes/150.33");
+	http_response_add_header(res, "Server", "AirTunes/230.33");
 	http_response_add_header(res, "CSeq", cseq);
 	http_response_add_header(res, "Date", str_time);
 	http_response_finish(res, responseData, responseDataLen);

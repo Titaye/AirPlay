@@ -22,6 +22,9 @@
     <Filter Include="lib\aac-eld">
       <UniqueIdentifier>{8cedbc65-569e-4c3d-a25a-ba542970604d}</UniqueIdentifier>
     </Filter>
+    <Filter Include="lib\playfair">
+      <UniqueIdentifier>{85064c19-cef6-4929-aa06-c670f958a655}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.c">
@@ -83,6 +86,21 @@
     </ClCompile>
     <ClCompile Include="lib\aac_eld\aac_eld.c">
       <Filter>lib\aac-eld</Filter>
+    </ClCompile>
+    <ClCompile Include="lib\playfair\sap_hash.c">
+      <Filter>lib\playfair</Filter>
+    </ClCompile>
+    <ClCompile Include="lib\playfair\hand_garble.c">
+      <Filter>lib\playfair</Filter>
+    </ClCompile>
+    <ClCompile Include="lib\playfair\modified_md5.c">
+      <Filter>lib\playfair</Filter>
+    </ClCompile>
+    <ClCompile Include="lib\playfair\omg_hax.c">
+      <Filter>lib\playfair</Filter>
+    </ClCompile>
+    <ClCompile Include="lib\playfair\playfair.c">
+      <Filter>lib\playfair</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -169,6 +187,12 @@
     </ClInclude>
     <ClInclude Include="lib\aac_eld\aac_eld.h">
       <Filter>lib\aac-eld</Filter>
+    </ClInclude>
+    <ClInclude Include="lib\playfair\playfair.h">
+      <Filter>lib\playfair</Filter>
+    </ClInclude>
+    <ClInclude Include="lib\playfair\omg_hax.h">
+      <Filter>lib\playfair</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
